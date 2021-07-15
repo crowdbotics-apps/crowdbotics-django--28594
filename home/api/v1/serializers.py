@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest
 from django.utils.translation import ugettext_lazy as _
@@ -7,7 +8,10 @@ from allauth.utils import email_address_exists, generate_unique_username
 from allauth.account.adapter import get_adapter
 from allauth.account.utils import setup_user_email
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from rest_auth.serializers import PasswordResetSerializer
+
+from home.models import App, Plan, Subscription
 
 
 User = get_user_model()
@@ -74,3 +78,59 @@ class UserSerializer(serializers.ModelSerializer):
 class PasswordSerializer(PasswordResetSerializer):
     """Custom serializer for rest_auth to solve reset password error"""
     password_reset_form_class = ResetPasswordForm
+
+class AppSerializer(serializers.ModelSerializer):
+    subscription = serializers.IntegerField(source='app.subscription', read_only=True)
+
+    class Meta:
+        model = App
+        read_only_fields = ('user',)
+        fields = (
+            'id',
+            'name',
+            'description',
+            'type',
+            'framework',
+            'domain_name',
+            'screenshot',
+            'subscription',
+            'user',
+            'created_at',
+            'updated_at'
+            )
+
+    def validate_name(self, value):
+        obj = App.objects.filter(user=self.context['request'].user, name=value)
+        if obj.exists():
+            raise serializers.ValidationError("App with this name already exists.")
+        return value
+
+
+class PlanSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(
+        default=serializers.CreateOnlyDefault(timezone.now)
+    )
+
+    class Meta:
+        model = Plan
+        fields = ('id', 'name', 'description', 'price', 'created_at', 'updated_at')
+        validators = [
+            UniqueValidator(
+                queryset=Plan.objects.all(),
+                message='Plan already exists with this name.'
+            )
+        ]
+
+    def validate_price(self, value):
+        if value < 0:
+            raise serializers.ValidationError('Price must be greater than 0.')
+        return value
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+
+    user = serializers.IntegerField(source='app.user.id', read_only=True)
+
+    class Meta:
+        model = Subscription
+        fields = ('id', 'user', 'plan', 'app', 'active', 'created_at', 'updated_at')

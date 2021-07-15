@@ -3,9 +3,14 @@ from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
+from home.models import App, Plan, Subscription
+
 from home.api.v1.serializers import (
     SignupSerializer,
     UserSerializer,
+    AppSerializer,
+    PlanSerializer,
+    SubscriptionSerializer
 )
 
 
@@ -28,3 +33,19 @@ class LoginViewSet(ViewSet):
         token, created = Token.objects.get_or_create(user=user)
         user_serializer = UserSerializer(user)
         return Response({"token": token.key, "user": user_serializer.data})
+
+class AppViewSet(ModelViewSet):
+    queryset = App.objects.all()
+    serializer_class = AppSerializer
+
+
+class PlanViewSet(ModelViewSet):
+    http_method_names = ["get"]
+    queryset = Plan.objects.all()
+    serializer_class = PlanSerializer
+
+
+class SubscriptionViewSet(ModelViewSet):
+    http_method_names = ["get", "post", "put", "patch"]
+    queryset = Subscription.objects.all()
+    serializer_class = SubscriptionSerializer
