@@ -38,6 +38,12 @@ class AppViewSet(ModelViewSet):
     queryset = App.objects.all()
     serializer_class = AppSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
 
 class PlanViewSet(ModelViewSet):
     http_method_names = ["get"]
@@ -49,3 +55,9 @@ class SubscriptionViewSet(ModelViewSet):
     http_method_names = ["get", "post", "put", "patch"]
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
