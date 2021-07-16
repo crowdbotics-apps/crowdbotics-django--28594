@@ -1,3 +1,4 @@
+from rest_framework import permissions
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.viewsets import ModelViewSet, ViewSet
 from rest_framework.authtoken.models import Token
@@ -37,6 +38,7 @@ class LoginViewSet(ViewSet):
 class AppViewSet(ModelViewSet):
     queryset = App.objects.all()
     serializer_class = AppSerializer
+    permission_classes = (permissions.IsAuthenticated, )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -55,6 +57,7 @@ class SubscriptionViewSet(ModelViewSet):
     http_method_names = ["get", "post", "put", "patch"]
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
+    permission_classes = (permissions.IsAuthenticated, )
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
